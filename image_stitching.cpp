@@ -11,7 +11,7 @@ int main() {
     // Combined in ORB for orientation component
     cv::Ptr<cv::ORB> detector = cv::ORB::create();
 
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
+    cv::Ptr<cv::DescriptorMatcher> descriptor_matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
 
     std::vector<cv::KeyPoint> lastFrameKeypoints1, lastFrameKeypoints2;
 
@@ -31,11 +31,11 @@ int main() {
     detector->detectAndCompute(image2, cv::noArray(), lastFrameKeypoints2, lastFrameDescriptors2);
 
     // Match the descriptor between two images, put them in matches vector
-    matcher->match(lastFrameDescriptors1, lastFrameDescriptors2, matches);
+    descriptor_matcher->match(lastFrameDescriptors1, lastFrameDescriptors2, matches);
 
-    std::vector<cv::Point2d> good_point1, good_point2;
-    good_point1.reserve(matches.size());
-    good_point2.reserve(matches.size());
+    std::vector<cv::Point2d> first_good_point, second_good_point;
+    first_good_point.reserve(matches.size());
+    second_good_point.reserve(matches.size());
 
     // Calculate max and min distance between keypoints
     // distance = similarity between descriptors, less distance -> more similar
@@ -58,46 +58,47 @@ int main() {
     // If distane is <= min_dist * 1.5 its valid
     // Value can be changed, higher value means more keypoints 
 
-    for (const auto& m : matches) {
-        if (m.distance <= 1.5 * min_dist) {
+    for (const auto& current_match : matches) {
+        if (current_match.distance <= 1.5 * min_dist) {
 
             // Matches variable holds the index values of x-y positions of the keypoints in both images.
             // queryIdx gives key poinst index which has a match and trainIdx gives its corresponding matched key
             // These index values can then be used to find the key points in the key points arrays.
 
-            good_point1.push_back(lastFrameKeypoints1.at(m.queryIdx).pt);
-            good_point2.push_back(lastFrameKeypoints2.at(m.trainIdx).pt);
+            first_good_point.push_back(lastFrameKeypoints1.at(current_match.queryIdx).pt);
+            second_good_point.push_back(lastFrameKeypoints2.at(current_match.trainIdx).pt);
         }
     }
 
      // Stitching
     // To stitch we are cropping the images with the unwanted or repeating regions
 
-    cv::Rect croppImg1(0, 0, image1.cols, image1.rows);
-    cv::Rect croppImg2(0, 0, image2.cols, image2.rows);
+    cv::Rect cropped_image1(0, 0, image1.cols, image1.rows);
+    cv::Rect cropped_image2(0, 0, image2.cols, image2.rows);
 
     // find minimum horizontal value for image 1 to crop
-    //e.g. img1 size = 200 first keypoint having match found at position 100 crop img1 to 0-100
-    // crop image2 to from corresponding x value to the width. 
-    //e.g. img2 width 200 point found at 50 crop image  50-200
+    //e.g. img1 size = 200 first keypoint having match found at position 100 crop img1 to pixel 0 to 100, i.e. crop everything above
+    // crop image2 to from corresponding x value to the width. Same procedure
+    //e.g. img2 width 200 point found at 50 crop image  50-200, so cut everything to the left
 
     // movementDirection tells us if the two images are aligned or not
     // if not, adjust them accordingly
     int imgWidth = image1.cols;
-    for (int i = 0; i < good_point1.size(); ++i)
+    for (int i = 0; i < first_good_point.size(); ++i)
     {
-        if (good_point1[i].x < imgWidth)
+        if (first_good_point[i].x < imgWidth)
         {
-            croppImg1.width = good_point1.at(i).x;
-            croppImg2.x = good_point2[i].x;
-            croppImg2.width = image2.cols - croppImg2.x;
-            movementDirection = good_point1[i].y - good_point2[i].y;
-            imgWidth = good_point1[i].x;
+            // Crop image at minimum horizontal point where matched keypoint is detected
+            cropped_image1.width = first_good_point.at(i).x;
+            cropped_image2.x = second_good_point[i].x;
+            cropped_image2.width = image2.cols - cropped_image2.x;
+            movementDirection = first_good_point[i].y - second_good_point[i].y;
+            imgWidth = first_good_point[i].x;
         }
     }
 
-    image1 = image1(croppImg1);
-    image2 = image2(croppImg2);
+    image1 = image1(cropped_image1);
+    image2 = image2(cropped_image2);
     
     int maxHeight;
     int maxWidth;
@@ -111,11 +112,25 @@ int main() {
     int maxWidth = image1.cols + image2.cols;
 
     cv::Mat result = cv::Mat::zeros(cv::Size(maxWidth, maxHeight + abs(movementDirection)), CV_8UC3);
-    if (movementDirection > 0) {
-
+    if (movementDirection > 0)
+    {
+        cv::Mat half1(result, cv::Rect(0, 0, image1.cols, image1.rows));
+        image1.copyTo(half1);
+        cv::Mat half2(result, cv::Rect(image1.cols, abs(movementDirection),image2.cols, image2.rows));
+        image2.copyTo(half2);
     }
+    else
+    {
+        cv::Mat half1(result, cv::Rect(0, abs(movementDirection), image1.cols, image1.rows));
+        image1.copyTo(half1);
+        cv::Mat half2(result, cv::Rect(image1.cols,0 ,image2.cols, image2.rows));
+        image2.copyTo(half2);
+    }
+    cv::imshow("Stitched Image", result);
 
-    )
-    
-
+    int k = cv::waitKey(0);
+    if (k == 's') {
+        imwrite("StitchedImage.png", result);
+    }
+    return 0;
 }
