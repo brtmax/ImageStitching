@@ -4,36 +4,36 @@
 #include "opencv2/opencv.hpp"
 #include <iostream>
 
-using namespace std;
+using namespace cv;
 
 int main() {
     // We use FAST for keypoint detection and BRIEF for description
     // Combined in ORB for orientation component
-    cv::Ptr<cv::ORB> detector = cv::ORB::create();
+    Ptr<ORB> detector = ORB::create();
 
-    cv::Ptr<cv::DescriptorMatcher> descriptor_matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
+    Ptr<DescriptorMatcher> descriptor_matcher = DescriptorMatcher::create(DescriptorMatcher::BRUTEFORCE);
 
-    std::vector<cv::KeyPoint> lastFrameKeypoints1, lastFrameKeypoints2;
+    std::vector<KeyPoint> lastFrameKeypoints1, lastFrameKeypoints2;
 
-    cv::Mat lastFrameDescriptors1, lastFrameDescriptors2;
+    Mat lastFrameDescriptors1, lastFrameDescriptors2;
 
-    std::vector<cv::DMatch > matches;
+    std::vector<DMatch > matches;
 
     int movementDirection = 0;
-    std::string image_path1 = cv::samples::findFile("Hill1.jpg");
-    std::string image_path2 = cv::samples::findFile("Hill2.jpg");
+    std::string image_path1 = samples::findFile("Hill1.jpg");
+    std::string image_path2 = samples::findFile("Hill2.jpg");
 
-    cv::Mat image1 = cv::imread(image_path1);
-    cv::Mat image2 = cv::imread(image_path2);
+    Mat image1 = imread(image_path1);
+    Mat image2 = imread(image_path2);
 
     // Find keypoints and their descriptor using ORB
-    detector->detectAndCompute(image1, cv::noArray(), lastFrameKeypoints1, lastFrameDescriptors1);
-    detector->detectAndCompute(image2, cv::noArray(), lastFrameKeypoints2, lastFrameDescriptors2);
+    detector->detectAndCompute(image1, noArray(), lastFrameKeypoints1, lastFrameDescriptors1);
+    detector->detectAndCompute(image2, noArray(), lastFrameKeypoints2, lastFrameDescriptors2);
 
     // Match the descriptor between two images, put them in matches vector
     descriptor_matcher->match(lastFrameDescriptors1, lastFrameDescriptors2, matches);
 
-    std::vector<cv::Point2d> first_good_point, second_good_point;
+    std::vector<Point2d> first_good_point, second_good_point;
     first_good_point.reserve(matches.size());
     second_good_point.reserve(matches.size());
 
@@ -73,8 +73,8 @@ int main() {
      // Stitching
     // To stitch we are cropping the images with the unwanted or repeating regions
 
-    cv::Rect cropped_image1(0, 0, image1.cols, image1.rows);
-    cv::Rect cropped_image2(0, 0, image2.cols, image2.rows);
+    Rect cropped_image1(0, 0, image1.cols, image1.rows);
+    Rect cropped_image2(0, 0, image2.cols, image2.rows);
 
     // find minimum horizontal value for image 1 to crop
     //e.g. img1 size = 200 first keypoint having match found at position 100 crop img1 to pixel 0 to 100, i.e. crop everything above
@@ -111,24 +111,24 @@ int main() {
 
     int maxWidth = image1.cols + image2.cols;
 
-    cv::Mat result = cv::Mat::zeros(cv::Size(maxWidth, maxHeight + abs(movementDirection)), CV_8UC3);
+    Mat result = Mat::zeros(Size(maxWidth, maxHeight + abs(movementDirection)), CV_8UC3);
     if (movementDirection > 0)
     {
-        cv::Mat half1(result, cv::Rect(0, 0, image1.cols, image1.rows));
+        Mat half1(result, Rect(0, 0, image1.cols, image1.rows));
         image1.copyTo(half1);
-        cv::Mat half2(result, cv::Rect(image1.cols, abs(movementDirection),image2.cols, image2.rows));
+        Mat half2(result, Rect(image1.cols, abs(movementDirection),image2.cols, image2.rows));
         image2.copyTo(half2);
     }
     else
     {
-        cv::Mat half1(result, cv::Rect(0, abs(movementDirection), image1.cols, image1.rows));
+        Mat half1(result, Rect(0, abs(movementDirection), image1.cols, image1.rows));
         image1.copyTo(half1);
-        cv::Mat half2(result, cv::Rect(image1.cols,0 ,image2.cols, image2.rows));
+        Mat half2(result, Rect(image1.cols,0 ,image2.cols, image2.rows));
         image2.copyTo(half2);
     }
-    cv::imshow("Stitched Image", result);
+    imshow("Stitched Image", result);
 
-    int k = cv::waitKey(0);
+    int k = waitKey(0);
     if (k == 's') {
         imwrite("StitchedImage.png", result);
     }
