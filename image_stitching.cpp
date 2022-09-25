@@ -34,5 +34,27 @@ int main() {
     matcher->match(lastFrameDescriptors1, lastFrameDescriptors2, matches);
 
     std::vector<cv::Point2d> good_point1, good_point2;
+    good_point1.reserve(matches.size());
+    good_point2.reserve(matches.size());
+
+    // Calculate max and min distance between keypoints
+    // distance = similarity between descriptors, less distance -> more similar
+    double max_dist = 0;
+    double min_dist = 100;
+
+    for (const auto& m : matches) {
+        double dist = m.distance;
+
+        if (dist < min_dist) {
+            min_dist = dist;
+        }
+
+        if (dist > max_dist) {
+            max_dist = dist;
+        }
+    }
+
+
+    
 
 }
