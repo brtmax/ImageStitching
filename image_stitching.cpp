@@ -54,6 +54,22 @@ int main() {
         }
     }
 
+    // Get all valid matches
+    // If distane is <= min_dist * 1.5 its valid
+    // Value can be changed, higher value means more keypoints 
+
+    for (const auto& m : matches) {
+        if (m.distance <= 1.5 * min_dist) {
+
+            // Matches variable holds the index values of x-y positions of the keypoints in both images.
+            // queryIdx gives key poinst index which has a match and trainIdx gives its corresponding matched key
+            // These index values can then be used to find the key points in the key points arrays.
+
+            good_point1.push_back(lastFrameKeypoints1.at(m.queryIdx).pt);
+            good_point2.push_back(lastFrameKeypoints2.at(m.trainIdx).pt);
+        }
+    }
+
 
     
 
