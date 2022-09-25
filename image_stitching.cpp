@@ -70,6 +70,9 @@ int main() {
         }
     }
 
+     // Stitching
+    // To stitch we are cropping the images with the unwanted or repeating regions
+
     cv::Rect croppImg1(0, 0, image1.cols, image1.rows);
     cv::Rect croppImg2(0, 0, image2.cols, image2.rows);
 
@@ -92,6 +95,27 @@ int main() {
             imgWidth = good_point1[i].x;
         }
     }
+
+    image1 = image1(croppImg1);
+    image2 = image2(croppImg2);
+    
+    int maxHeight;
+    int maxWidth;
+
+    if (image1.rows > image2.rows) {
+        maxHeight = image1.rows;
+    } else {
+        maxHeight = image2.rows;
+    }
+
+    int maxWidth = image1.cols + image2.cols;
+
+    cv::Mat result = cv::Mat::zeros(cv::Size(maxWidth, maxHeight + abs(movementDirection)), CV_8UC3);
+    if (movementDirection > 0) {
+
+    }
+
+    )
     
 
 }
