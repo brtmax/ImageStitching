@@ -70,7 +70,28 @@ int main() {
         }
     }
 
+    cv::Rect croppImg1(0, 0, image1.cols, image1.rows);
+    cv::Rect croppImg2(0, 0, image2.cols, image2.rows);
 
+    // find minimum horizontal value for image 1 to crop
+    //e.g. img1 size = 200 first keypoint having match found at position 100 crop img1 to 0-100
+    // crop image2 to from corresponding x value to the width. 
+    //e.g. img2 width 200 point found at 50 crop image  50-200
+
+    // movementDirection tells us if the two images are aligned or not
+    // if not, adjust them accordingly
+    int imgWidth = image1.cols;
+    for (int i = 0; i < good_point1.size(); ++i)
+    {
+        if (good_point1[i].x < imgWidth)
+        {
+            croppImg1.width = good_point1.at(i).x;
+            croppImg2.x = good_point2[i].x;
+            croppImg2.width = image2.cols - croppImg2.x;
+            movementDirection = good_point1[i].y - good_point2[i].y;
+            imgWidth = good_point1[i].x;
+        }
+    }
     
 
 }
