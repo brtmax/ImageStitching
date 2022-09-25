@@ -1,5 +1,4 @@
-# Sample script to try out FAST feature detector
-
+# Trying out FAST, from OpenCV docs
 import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
