@@ -26,6 +26,13 @@ int main() {
     cv::Mat image1 = cv::imread(image_path1);
     cv::Mat image2 = cv::imread(image_path2);
 
-  
+    // Find keypoints and their descriptor using ORB
+    detector->detectAndCompute(image1, cv::noArray(), lastFrameKeypoints1, lastFrameDescriptors1);
+    detector->detectAndCompute(image2, cv::noArray(), lastFrameKeypoints2, lastFrameDescriptors2);
+
+    // Match the descriptor between two images, put them in matches vector
+    matcher->match(lastFrameDescriptors1, lastFrameDescriptors2, matches);
+
+    std::vector<cv::Point2d> good_point1, good_point2;
 
 }
