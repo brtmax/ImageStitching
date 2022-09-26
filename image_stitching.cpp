@@ -109,7 +109,7 @@ int main() {
         maxHeight = image2.rows;
     }
 
-    int maxWidth = image1.cols + image2.cols;
+    maxWidth = image1.cols + image2.cols;
 
     Mat result = Mat::zeros(Size(maxWidth, maxHeight + abs(movementDirection)), CV_8UC3);
     if (movementDirection > 0)
